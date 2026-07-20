@@ -1,0 +1,15 @@
+# Render.com Blueprint — deploy TokoKasir sekali klik.
+# Cara: push repo ke GitHub → Render → New → Blueprint → pilih repo ini.
+services:
+  - type: web
+    name: tokokasir
+    runtime: node
+    plan: free
+    buildCommand: ""            # tanpa dependency, tak perlu npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+    # Catatan: disk pada plan free bersifat ephemeral (data/toko.db bisa ter-reset
+    # saat re-deploy). Untuk data permanen, tambahkan Persistent Disk (mount ke /app/data)
+    # atau ganti ke database eksternal.
