@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kasir & Admin — TokoKasir</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="topbar">
+    <h1>🧾 Kasir &amp; Admin</h1>
+    <div class="links">
+      <a href="/shop.html" target="_blank">Toko Online ↗</a>
+      <a href="/">Beranda</a>
+    </div>
+  </div>
+  <div class="tabs">
+    <button data-tab="kasir" class="active">Kasir</button>
+    <button data-tab="produk">Produk &amp; Stok</button>
+    <button data-tab="pesanan">Pesanan Online <span id="ordBadge"></span></button>
+    <button data-tab="laporan">Laporan</button>
+  </div>
+
+  <div class="wrap">
+    <!-- ============ KASIR ============ -->
+    <section id="tab-kasir">
+      <div class="grid2">
+        <div class="card">
+          <h2>Pilih Produk</h2>
+          <div class="field">
+            <label>🔍 Scan / ketik barcode-SKU lalu Enter</label>
+            <input id="scanSku" placeholder="Arahkan scanner ke sini, atau ketik SKU + Enter" autocomplete="off" />
+          </div>
+          <div class="search"><input id="posSearch" placeholder="Cari nama / SKU produk..." /></div>
+          <div id="posProducts" class="prod-grid"></div>
+        </div>
+        <div class="card">
+          <h2>Keranjang</h2>
+          <div id="cart"></div>
+          <div class="field" style="margin-top:12px">
+            <label>Nama pelanggan (opsional)</label>
+            <input id="custName" placeholder="Umum" />
+          </div>
+          <div class="row">
+            <div style="flex:1"><label>Diskon (Rp)</label><input id="discount" type="number" min="0" value="0" /></div>
+            <div style="flex:1"><label>Pajak (Rp)</label><input id="tax" type="number" min="0" value="0" /></div>
+          </div>
+          <div class="totals">
+            <div class="line"><span>Subtotal</span><span id="subtotal">Rp 0</span></div>
+            <div class="line grand"><span>Total</span><span id="grand">Rp 0</span></div>
+          </div>
+          <div class="field" style="margin-top:10px">
+            <label>Metode Bayar</label>
+            <select id="payMethod">
+              <option>Tunai</option>
+              <option>QRIS</option>
+              <option>Debit</option>
+              <option>Transfer</option>
+            </select>
+          </div>
+          <div class="field"><label>Bayar (Rp)</label><input id="paid" type="number" min="0" placeholder="Uang diterima" /></div>
+          <div class="line" style="display:flex;justify-content:space-between;margin-bottom:12px"><span class="muted">Kembalian</span><strong id="change">Rp 0</strong></div>
+          <div class="row">
+            <button class="btn green" style="flex:1" id="btnCheckout">Bayar &amp; Cetak Struk</button>
+            <button class="btn ghost" id="btnClearCart">Kosongkan</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PRODUK ============ -->
+    <section id="tab-produk" hidden>
+      <div class="card" style="margin-bottom:18px">
+        <h2 id="prodFormTitle">Tambah Produk</h2>
+        <div class="row">
+          <div style="flex:1;min-width:120px"><label>SKU</label><input id="fSku" placeholder="MNM-004" /></div>
+          <div style="flex:2;min-width:160px"><label>Nama produk *</label><input id="fName" /></div>
+          <div style="flex:1;min-width:120px"><label>Kategori</label><input id="fCat" placeholder="Umum" /></div>
+          <div style="flex:1;min-width:100px"><label>Harga *</label><input id="fPrice" type="number" min="0" /></div>
+          <div style="flex:1;min-width:90px"><label>Stok</label><input id="fStock" type="number" min="0" value="0" /></div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn green" id="btnSaveProd">Simpan Produk</button>
+          <button class="btn ghost" id="btnCancelEdit" hidden>Batal Edit</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Daftar Produk &amp; Stok</h2>
+        <div class="search"><input id="prodSearch" placeholder="Cari produk..." /></div>
+        <div style="overflow:auto">
+          <table>
+            <thead><tr><th>SKU</th><th>Nama</th><th>Kategori</th><th>Harga</th><th>Stok</th><th>Status</th><th></th></tr></thead>
+            <tbody id="prodTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PESANAN ONLINE ============ -->
+    <section id="tab-pesanan" hidden>
+      <div class="card">
+        <h2>Pesanan Online Masuk</h2>
+        <p class="muted" style="margin-top:-8px">Pesanan dari pelanggan lewat Toko Online. Terima → Selesaikan untuk memotong stok &amp; mencatat penjualan.</p>
+        <div id="ordersList"></div>
+      </div>
+    </section>
+
+    <!-- ============ LAPORAN ============ -->
+    <section id="tab-laporan" hidden>
+      <div class="card" style="margin-bottom:18px">
+        <div class="row">
+          <div><label>Dari tanggal</label><input id="repFrom" type="date" /></div>
+          <div><label>Sampai tanggal</label><input id="repTo" type="date" /></div>
+          <div style="align-self:flex-end"><button class="btn" id="btnReport">Tampilkan</button></div>
+          <div style="align-self:flex-end"><button class="btn ghost" id="btnToday">Hari Ini</button></div>
+          <div style="align-self:flex-end"><button class="btn green" id="btnExportCsv">⬇ Export CSV</button></div>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="v" id="stRevenue">Rp 0</div><div class="l">Total Omzet</div></div>
+        <div class="stat"><div class="v" id="stTx">0</div><div class="l">Jumlah Transaksi</div></div>
+        <div class="stat"><div class="v" id="stItems">0</div><div class="l">Item Terjual</div></div>
+        <div class="stat"><div class="v" id="stAvg">Rp 0</div><div class="l">Rata-rata / Transaksi</div></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <h2>Produk Terlaris</h2>
+          <div style="overflow:auto"><table><thead><tr><th>Produk</th><th>Qty</th><th>Omzet</th></tr></thead><tbody id="bestTable"></tbody></table></div>
+        </div>
+        <div class="card">
+          <h2>Sumber Penjualan</h2>
+          <div id="sourceChart"></div>
+          <h2 style="margin-top:20px">Omzet Harian</h2>
+          <div id="dailyChart"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Receipt modal -->
+  <div class="modal-bg" id="receiptModal">
+    <div class="modal">
+      <div class="receipt" id="receiptBody"></div>
+      <div class="row" style="margin-top:16px">
+        <button class="btn" style="flex:1" onclick="window.print()">Cetak</button>
+        <button class="btn ghost" onclick="closeReceipt()">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="/pos.js"></script>
+</body>
+</html>

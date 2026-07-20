@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Toko Online — TokoKasir</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="topbar">
+    <h1>📱 Toko Online</h1>
+    <div class="links"><a href="/">Beranda</a></div>
+  </div>
+
+  <div class="wrap">
+    <div class="grid2">
+      <div class="card">
+        <h2>Katalog Produk</h2>
+        <div class="search"><input id="shopSearch" placeholder="Cari produk..." /></div>
+        <div id="shopProducts" class="prod-grid"></div>
+      </div>
+      <div class="card">
+        <h2>Keranjang Pesanan</h2>
+        <div id="cart"></div>
+        <div class="totals"><div class="line grand"><span>Total</span><span id="grand">Rp 0</span></div></div>
+        <hr style="border:none;border-top:1px solid var(--line);margin:14px 0" />
+        <div class="field"><label>Nama *</label><input id="cName" placeholder="Nama kamu" /></div>
+        <div class="field"><label>No. HP / WhatsApp</label><input id="cPhone" placeholder="08xxxx" /></div>
+        <div class="field"><label>Catatan</label><textarea id="cNote" rows="2" placeholder="Contoh: tanpa pedas, ambil jam 3"></textarea></div>
+        <button class="btn green" style="width:100%" id="btnOrder">Kirim Pesanan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- confirmation modal -->
+  <div class="modal-bg" id="okModal">
+    <div class="modal" style="text-align:center">
+      <div style="font-size:46px">✅</div>
+      <h3>Pesanan Terkirim!</h3>
+      <p class="muted">Nomor pesanan kamu:</p>
+      <div style="font-size:20px;font-weight:800;margin-bottom:8px" id="okCode"></div>
+      <p class="muted">Pesanan sudah masuk ke kasir. Tunggu konfirmasi ya 🙏</p>
+      <button class="btn" style="width:100%;margin-top:10px" onclick="location.reload()">Pesan Lagi</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const rp = (n) => 'Rp ' + Math.round(n || 0).toLocaleString('id-ID');
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+    let toastTimer;
+    function toast(m, err) { const t=$('#toast'); t.textContent=m; t.className='toast show'+(err?' err':''); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.className='toast',2600); }
+    const api = async (u,o) => { const r=await fetch(u,{headers:{'Content-Type':'application/json'},...o}); const d=await r.json().catch(()=>({})); if(!r.ok) throw new Error(d.error||'Gagal'); return d; };
+
+    let PRODUCTS = [], cart = [];
+    async function load() { PRODUCTS = await api('/api/products'); render(); }
+    function render() {
+      const q = $('#shopSearch').value.toLowerCase();
+      const list = PRODUCTS.filter(p => p.name.toLowerCase().includes(q));
+      $('#shopProducts').innerHTML = list.map(p => {
+        const out = p.stock <= 0;
+        return `<button class="prod-card ${out?'out':''}" ${out?'disabled':''} onclick="add(${p.id})">
+          <div class="nm">${esc(p.name)}</div>
+          <div class="pr">${rp(p.price)}</div>
+          <div class="st">${out?'Habis':'Stok: '+p.stock}</div>
+        </button>`;
+      }).join('') || '<div class="empty">Tidak ada produk</div>';
+    }
+    $('#shopSearch').oninput = render;
+
+    window.add = (id) => {
+      const p = PRODUCTS.find(x=>x.id===id); if(!p) return;
+      const l = cart.find(c=>c.id===id); const inCart = l?l.qty:0;
+      if (inCart+1 > p.stock) return toast('Stok tidak cukup', true);
+      if (l) l.qty++; else cart.push({id:p.id,name:p.name,price:p.price,qty:1,stock:p.stock});
+      renderCart();
+    };
+    window.chQty = (id,d) => {
+      const l = cart.find(c=>c.id===id); if(!l) return;
+      if (d>0 && l.qty+1>l.stock) return toast('Stok tidak cukup', true);
+      l.qty+=d; if(l.qty<=0) cart=cart.filter(c=>c.id!==id); renderCart();
+    };
+    function renderCart() {
+      if(!cart.length){ $('#cart').innerHTML='<div class="empty">Keranjang kosong.<br>Pilih produk untuk memesan.</div>'; }
+      else $('#cart').innerHTML = cart.map(c=>`<div class="cart-item">
+        <div class="nm">${esc(c.name)}<div class="muted" style="font-size:12px">${rp(c.price)}</div></div>
+        <div class="qty"><button onclick="chQty(${c.id},-1)">−</button><span>${c.qty}</span><button onclick="chQty(${c.id},1)">+</button></div>
+        <div style="width:80px;text-align:right;font-weight:600">${rp(c.price*c.qty)}</div></div>`).join('');
+      $('#grand').textContent = rp(cart.reduce((s,c)=>s+c.price*c.qty,0));
+    }
+
+    $('#btnOrder').onclick = async () => {
+      if(!cart.length) return toast('Keranjang masih kosong', true);
+      const name = $('#cName').value.trim();
+      if(!name) return toast('Isi nama dulu ya', true);
+      try {
+        const o = await api('/api/orders', { method:'POST', body: JSON.stringify({
+          customer_name: name, customer_phone: $('#cPhone').value.trim(),
+          note: $('#cNote').value.trim(), items: cart,
+        })});
+        $('#okCode').textContent = o.code;
+        $('#okModal').classList.add('show');
+      } catch(e){ toast(e.message, true); }
+    };
+
+    load();
+    renderCart();
+  </script>
+</body>
+</html>
