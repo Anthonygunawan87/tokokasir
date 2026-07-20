@@ -10,7 +10,7 @@ const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
 
 const PORT = process.env.PORT || 3000;
-const PUBLIC_DIR = path.join(__dirname, 'public');
+const PUBLIC_DIR = __dirname;
 const DB_PATH = path.join(__dirname, 'data', 'toko.db');
 
 // ---------------------------------------------------------------- DB setup
